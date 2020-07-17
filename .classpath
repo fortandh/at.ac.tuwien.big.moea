@@ -24,7 +24,7 @@
 	<classpathentry exported="true" kind="lib" path="lib/JMetal-4.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/rsyntaxtextarea.jar"/>
 	<classpathentry kind="lib" path="/smart_office_example/src-mine/experiment"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/MOEAFramework-2.12"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/smart_office_example"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/MOEAFramework"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

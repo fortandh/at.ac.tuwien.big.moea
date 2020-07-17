@@ -259,22 +259,6 @@ public class SearchExperiment<S extends Solution> extends IndicatorConfiguration
       return results;
    }
 
-   // just for the experiment
-   public Map<SearchExecutor, List<Population>> run2() {
-      if(getMaxEvaluations() == 0) {
-         System.err
-               .println("Warning: Missing maximum number of evaluations in experiment. No search will be executed.");
-      }
-
-      final List<SearchExecutor> executors = createExecutors();
-
-      for(final SearchExecutor executor : executors) {
-         System.out.println("Run '" + executor.getName() + "' " + getNumberOfRuns() + " times...");
-         results2.put(executor, executor.runSeeds2(getNumberOfRuns()));
-      }
-      return results2;
-   }
-
    public void setAdaptiveMultimethodVariation(final boolean adaptiveMultimethodVariation) {
       this.adaptiveMultimethodVariation = adaptiveMultimethodVariation;
    }

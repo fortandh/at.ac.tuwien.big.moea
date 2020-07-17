@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,9 +37,7 @@ import org.moeaframework.algorithm.AlgorithmTerminationException;
 import org.moeaframework.algorithm.Checkpoints;
 import org.moeaframework.core.Algorithm;
 import org.moeaframework.core.NondominatedPopulation;
-import org.moeaframework.core.Population;
 import org.moeaframework.core.Problem;
-import org.moeaframework.core.Solution;
 import org.moeaframework.core.TerminationCondition;
 import org.moeaframework.core.comparator.ParetoDominanceComparator;
 import org.moeaframework.core.spi.AlgorithmFactory;
@@ -70,8 +67,6 @@ public class SearchExecutor extends Executor {
    protected String name;
    protected Algorithm algorithm;
    protected Map<String, Field> reflectiveFields = new HashMap<>();
-   // just for the experiment
-   protected SearchProblem<Solution> problemForEvaluation;
 
    public SearchExecutor() {
       super();
@@ -158,7 +153,7 @@ public class SearchExecutor extends Executor {
       if(factory == null) {
          factory = new DynamicAlgorithmFactory();
       }
-      this.problemForEvaluation = (SearchProblem<Solution>) getProblem();
+
       final Algorithm algorithm = factory.getAlgorithm(getAlgorithmName(), getTypedProperties().getProperties(),
             getProblem());
 
@@ -177,22 +172,12 @@ public class SearchExecutor extends Executor {
       return getField(ISCANCELED_NAME, AtomicBoolean.class);
    }
 
-   @Override
    protected File getCheckpointFile() {
       return getField(CHECKPOINT_FILE_NAME, File.class);
    }
 
    protected int getCheckpointFrequency() {
       return getField(CHECKPOINT_FREQUENCY_NAME, Integer.class, 0);
-   }
-
-   private double getEvaluation(final Solution solution) {
-      final double[] objectives = solution.getObjectives();
-      double eval = 0.0;
-      for(final double objective : objectives) {
-         eval += objective;
-      }
-      return eval;
    }
 
    protected ExecutorService getExecutorService() {
@@ -289,10 +274,8 @@ public class SearchExecutor extends Executor {
    protected NondominatedPopulation runAlgorithm(final Problem problem,
          final TerminationCondition terminationCondition) {
       final NondominatedPopulation result = newArchivePopulation();
-      // final Population population = new Population();
-      System.out.println("In the runAlgorithm!");
       try {
-         this.algorithm = createAlgorithm(problem);
+         final Algorithm algorithm = createAlgorithm(problem);
 
          // Create any initial conditions for termination condition
          terminationCondition.initialize(algorithm);
@@ -303,87 +286,16 @@ public class SearchExecutor extends Executor {
             }
 
             algorithm.step();
-
-            // population.addAll(algorithm.getResult());
             getProgressHelper().setCurrentNFE(algorithm.getNumberOfEvaluations());
          }
-         System.out.println("The solution: ");
+
+         result.addAll(algorithm.getResult());
       } finally {
          if(algorithm != null) {
             algorithm.terminate();
          }
       }
       return result;
-   }
-
-   protected Population runAlgorithm2(final Problem problem, final TerminationCondition terminationCondition) {
-      final Population population = new Population();
-      final Population populationTmp = new Population();
-      System.out.println("In the runAlgorithm2!");
-      try {
-         this.algorithm = createAlgorithm(problem);
-         // Create any initial conditions for termination condition
-         terminationCondition.initialize(algorithm);
-         while(!algorithm.isTerminated() && !terminationCondition.shouldTerminate(algorithm)) {
-            if(isCanceled()) {
-               return null;
-            }
-            // 遗传算法前进一代
-            algorithm.step();
-            // 收集最优个体
-            populationTmp.addAll(algorithm.getResult());
-            Solution selected = null;
-            for(final Solution solution : populationTmp) {
-               if(selected == null) {
-                  selected = solution;
-               } else {
-                  if(getEvaluation(selected) > getEvaluation(solution)) {
-                     selected = solution;
-                  }
-               }
-            }
-            population.add(selected);
-            getProgressHelper().setCurrentNFE(algorithm.getNumberOfEvaluations());
-
-         }
-         System.out.println("The solution: ");
-      } finally
-
-      {
-         if(algorithm != null) {
-            algorithm.terminate();
-         }
-      }
-      return population;
-   }
-
-   public List<Population> runSeeds2(final int numberOfSeeds) {
-      super.nonCancel();
-
-      if(super.getCheckpointFile() != null && numberOfSeeds > 1) {
-         System.err.println("checkpoints not supported when running multiple seeds");
-         super.clearCheckpointFile();
-      }
-
-      final int maxEvaluations = super.getProperties().getInt("maxEvaluations", -1);
-      final long maxTime = super.getProperties().getLong("maxTime", -1);
-      final List<Population> results2 = new ArrayList<>();
-
-      super.getProgress().start(numberOfSeeds, maxEvaluations, maxTime);
-
-      for(int i = 0; i < numberOfSeeds && !super.isCanceled(); i++) {
-         System.out.println("number: " + numberOfSeeds);
-         final Population result2 = runSingleSeed2(i + 1, numberOfSeeds, createTerminationCondition());
-
-         if(result2 != null) {
-            results2.add(result2);
-            super.getProgress().nextSeed();
-         }
-      }
-
-      super.getProgress().stop();
-
-      return results2;
    }
 
    protected NondominatedPopulation runSingleSeed(final int seed, final int numberOfSeeds, final int maxEvaluations) {
@@ -417,45 +329,8 @@ public class SearchExecutor extends Executor {
                executorService = Executors.newFixedThreadPool(getNumberOfThreads());
                problem = new DistributedProblem(problem, executorService);
             }
+
             return runAlgorithm(problem, terminationCondition);
-         } catch(final AlgorithmTerminationException e) {
-            System.err.println(e.getMessage());
-            return null;
-         } finally {
-            if(executorService != null) {
-               executorService.shutdown();
-            }
-         }
-      } catch(SecurityException | IllegalArgumentException ex) {
-         ex.printStackTrace();
-         System.err.println(ex.getMessage());
-         return null;
-      } finally {
-         if(problem != null) {
-            problem.close();
-         }
-      }
-   }
-
-   protected Population runSingleSeed2(final int seed, final int numberOfSeeds,
-         final TerminationCondition terminationCondition) {
-      if(getAlgorithmName() == null) {
-         throw new IllegalArgumentException("No algorithm specified");
-      }
-
-      Problem problem = null;
-      ExecutorService executorService = null;
-
-      try {
-         problem = getProblem();
-         try {
-            if(getExecutorService() != null) {
-               problem = new DistributedProblem(problem, getExecutorService());
-            } else if(getNumberOfThreads() > 1) {
-               executorService = Executors.newFixedThreadPool(getNumberOfThreads());
-               problem = new DistributedProblem(problem, executorService);
-            }
-            return runAlgorithm2(problem, terminationCondition);
          } catch(final AlgorithmTerminationException e) {
             System.err.println(e.getMessage());
             return null;
