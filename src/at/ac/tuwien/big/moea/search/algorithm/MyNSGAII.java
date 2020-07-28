@@ -22,6 +22,7 @@ import org.moeaframework.core.comparator.DominanceComparator;
 import org.moeaframework.core.comparator.ParetoDominanceComparator;
 import org.moeaframework.core.operator.TournamentSelection;
 
+import experiment.MySNHContext;
 import experiment.MySearchContext;
 
 /**
@@ -144,11 +145,15 @@ public class MyNSGAII extends AbstractEvolutionaryAlgorithm implements EpsilonBo
       population.addAll(offspring);
       population.truncate(populationSize);
 
-      final String res = MySearchContext.evaluate(offspring);
+      // final String res = MySearchContext.evaluate(offspring);
+
+      final String res = MySNHContext.evaluate(offspring);
       // System.out.println(res);
       try {
          // MySearchContext.fw.write(MySearchContext.log(offspring) + "\n");
-         MySearchContext.fw.write(res + "\n");
+         // MySearchContext.fw.write(res + "\n");
+         
+         MySNHContext.fw.write(res + "\n");
       } catch(final IOException e) {
          // TODO Auto-generated catch block
          e.printStackTrace();
