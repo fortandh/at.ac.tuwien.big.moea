@@ -163,7 +163,7 @@ public class MyNSGAII extends AbstractEvolutionaryAlgorithm implements EpsilonBo
 
       // final String res = MySearchContext.evaluate(offspring);
 
-      final String res = MySNHContext.evaluate(offspring, 3);
+      final String res = MySNHContext.evaluate(offspring, 4);
       // System.out.println(res);
       try {
          // MySearchContext.fw.write(MySearchContext.log(offspring) + "\n");
