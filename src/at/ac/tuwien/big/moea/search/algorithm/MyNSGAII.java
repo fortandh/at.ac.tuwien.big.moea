@@ -23,6 +23,7 @@ import org.moeaframework.core.comparator.ParetoDominanceComparator;
 import org.moeaframework.core.operator.TournamentSelection;
 
 import experiment.MySNHContext;
+import parallel.smart_nursing_home.Paralleler;
 
 /**
  * Implementation of NSGA-II, with the ability to attach an optional
@@ -123,16 +124,16 @@ public class MyNSGAII extends AbstractEvolutionaryAlgorithm implements EpsilonBo
                parents[i] = TournamentSelection.binaryTournament(pool.removeFirst(), pool.removeFirst(), comparator);
             }
 
-            // evolve the children
-            offspring.addAll(variation.evolve(parents));
+            // // evolve the children
+            // offspring.addAll(variation.evolve(parents));
 
             // code for parallel
-            // final Solution[] candidates = variation.evolve(parents);
-            // for(final Solution candidate : candidates) {
-            // if(Paralleler.durationValidate(candidate)) {
-            // offspring.add(candidate);
-            // }
-            // }
+            final Solution[] candidates = variation.evolve(parents);
+            for(final Solution candidate : candidates) {
+               if(Paralleler.durationValidate(candidate)) {
+                  offspring.add(candidate);
+               }
+            }
          }
       } else {
          // run NSGA-II using selection with replacement; this version allows
@@ -140,15 +141,15 @@ public class MyNSGAII extends AbstractEvolutionaryAlgorithm implements EpsilonBo
          while(offspring.size() < populationSize) {
             final Solution[] parents = selection.select(variation.getArity(), population);
 
-            offspring.addAll(variation.evolve(parents));
+            // offspring.addAll(variation.evolve(parents));
 
             // code for parallel
-            // final Solution[] candidates = variation.evolve(parents);
-            // for(final Solution candidate : candidates) {
-            // if(Paralleler.durationValidate(candidate)) {
-            // offspring.add(candidate);
-            // }
-            // }
+            final Solution[] candidates = variation.evolve(parents);
+            for(final Solution candidate : candidates) {
+               if(Paralleler.durationValidate(candidate)) {
+                  offspring.add(candidate);
+               }
+            }
          }
       }
 
@@ -161,10 +162,9 @@ public class MyNSGAII extends AbstractEvolutionaryAlgorithm implements EpsilonBo
       population.addAll(offspring);
       population.truncate(populationSize);
 
-      // final String res = MySearchContext.evaluate(offspring);
+      // final String res = MySearchContext.evaluate(offspring, 2);
 
-      final String res = MySNHContext.evaluate(offspring, 4);
-      // System.out.println(res);
+      final String res = MySNHContext.evaluate(offspring, 0);
       try {
          // MySearchContext.fw.write(MySearchContext.log(offspring) + "\n");
          // MySearchContext.fw.write(res + "\n");
