@@ -124,7 +124,7 @@ public class MyNSGAII extends AbstractEvolutionaryAlgorithm implements EpsilonBo
                parents[i] = TournamentSelection.binaryTournament(pool.removeFirst(), pool.removeFirst(), comparator);
             }
 
-            // // evolve the children
+            // evolve the children
             // offspring.addAll(variation.evolve(parents));
 
             // code for parallel
