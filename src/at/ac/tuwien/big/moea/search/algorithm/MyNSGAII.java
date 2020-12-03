@@ -22,8 +22,8 @@ import org.moeaframework.core.comparator.DominanceComparator;
 import org.moeaframework.core.comparator.ParetoDominanceComparator;
 import org.moeaframework.core.operator.TournamentSelection;
 
-import experiment.MySNHContext;
-import parallel.smart_nursing_home.Paralleler;
+import experiment.MySearchContext;
+import parallel.smart_office.Paralleler;
 
 /**
  * Implementation of NSGA-II, with the ability to attach an optional
@@ -162,14 +162,14 @@ public class MyNSGAII extends AbstractEvolutionaryAlgorithm implements EpsilonBo
       population.addAll(offspring);
       population.truncate(populationSize);
 
-      // final String res = MySearchContext.evaluate(offspring, 2);
+      final String res = MySearchContext.evaluate(offspring, 0);
 
-      final String res = MySNHContext.evaluate(offspring, 0);
+      // final String res = MySNHContext.evaluate(offspring, 0);
       try {
          // MySearchContext.fw.write(MySearchContext.log(offspring) + "\n");
-         // MySearchContext.fw.write(res + "\n");
+         MySearchContext.fw.write(res + "\n");
 
-         MySNHContext.fw.write(res + "\n");
+         // MySNHContext.fw.write(res + "\n");
       } catch(final IOException e) {
          // TODO Auto-generated catch block
          e.printStackTrace();
